@@ -1,30 +1,32 @@
 pipeline {
     agent any
     environment {
-        AWS_DEFAULT_REGION = 'your_aws_region'
-        S3_BUCKET = 'your_s3_bucket_name'
-        NODEJS_VERSION = 'your_nodejs_version'
+        AWS_DEFAULT_REGION = 'ap-southeast-2'
+        S3_BUCKET = 'p3careerai'
+        //NODEJS_VERSION = 'your_nodejs_version'
         AWS_CREDENTIAL_ID = 'your_aws_credential_id'
     }
+
     stages {
         stage('Checkout') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfigs: [[url: 'your_git_repository_url']]])
+                git branch:'main', url:'https://github.com/Leo1piece/chatgptfrontendtest.git'
+                //checkout([$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfigs: [[url: 'your_git_repository_url']]])
             }
         }
-        stage('Install Dependencies') {
-            steps {
-                withEnv(["PATH+NODEJS=${tool 'NodeJS'}\/bin"]) {
-                    sh 'npm install'
-                }
-            }
-        }
+        
         stage('Build and Test') {
             steps {
-                withEnv(["PATH+NODEJS=${tool 'NodeJS'}\/bin"]) {
-                    sh 'npm run build'
-                    sh 'npm test'
-                }
+                    sh 'npm start'
+
+            }
+        }
+        stage('Test') {
+            steps {
+                 //eslint 检查语法错误
+                //sh 'npx eslint .'
+
+                    sh 'npm run test'
             }
         }
         stage('Upload to S3') {
@@ -37,7 +39,7 @@ pipeline {
     }
     post {
         always {
-            cleanWs()
+            sh 'leo here'
         }
     }
     tools {
