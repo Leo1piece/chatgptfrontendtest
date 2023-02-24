@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+    environment {
+        AWS_DEFAULT_REGION = 'your_aws_region'
+        S3_BUCKET = 'your_s3_bucket_name'
+        NODEJS_VERSION = 'your_nodejs_version'
+        AWS_CREDENTIAL_ID = 'your_aws_credential_id'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], userRemoteConfigs: [[url: 'your_git_repository_url']]])
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                withEnv(["PATH+NODEJS=${tool 'NodeJS'}\/bin"]) {
+                    sh 'npm install'
+                }
+            }
+        }
+        stage('Build and Test') {
+            steps {
+                withEnv(["PATH+NODEJS=${tool 'NodeJS'}\/bin"]) {
+                    sh 'npm run build'
+                    sh 'npm test'
+                }
+            }
+        }
+        stage('Upload to S3') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: env.AWS_CREDENTIAL_ID, secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    sh 'aws s3 sync dist/ s3://${S3_BUCKET}/ --delete'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+    tools {
+        nodejs "${NODEJS_VERSION}"
+    }
+}
